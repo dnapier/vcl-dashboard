@@ -1,0 +1,32 @@
+<html>
+	<head>
+	<link rel="stylesheet" type="text/css" href="/static/public/css/main.css" />	
+	</head>
+	<body>
+	<div id="wrapper">
+	<div id="header">
+	<h1><a href="https://libcc.org/">Virtual Computer Lab</a></h1>
+	{% if request.user.is_authenticated %}
+		<a id="logout" class="button" href="./logout">Logout</a>
+	{% endif %}
+	
+	</div>
+	<div id="sidebar">
+		{% block sidebar %}
+		{% endblock %}
+	</div>
+	<div id="content">
+		{% block content %}
+		{% endblock %}
+	</div>
+	<div id="footer">
+	<a href="https://libcc.org/info">Find out more about libcc.org</a>
+	<br/>
+	Powered by an Amazon <a href="http://aws.amazon.com/education/">AWS in education </a> grant
+	{% block content-related %}
+	{% endblock %}
+	<!--<a id="logout" class="button" href="./logout">Logout</a> -->
+	</div>
+	</div>
+	</body>
+</html>

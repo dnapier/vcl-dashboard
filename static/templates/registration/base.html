@@ -1,0 +1,25 @@
+<html>
+	<head>
+	<link rel="stylesheet" type="text/css" href="/static/public/css/main.css" />	
+	</head>
+	<body>
+	<div id="header">
+	<h1><a href="/">Libcc Virtual Computer Lab</a></h1>
+	{% if request.user.is_authenticated %}
+	<a id="logout" class="button" href="./logout">Logout</a>
+	{% endif %}
+	</div>
+	<div id="sidebar">
+		{% block sidebar %}
+		{% endblock %}
+	</div>
+	<div id="content">
+		{% block content %}
+		{% endblock %}
+	</div>
+	<div id="footer">
+	{% block content-related %}
+	{% endblock %}
+	</div>
+	</body>
+</html>

@@ -1,0 +1,1 @@
+Activate your Libcc.com account - you have {{ expiration_days }} days!
