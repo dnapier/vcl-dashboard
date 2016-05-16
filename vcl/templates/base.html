@@ -1,0 +1,160 @@
+
+<html>
+	<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+	<link rel="stylesheet" type="text/css" href="/static/public/css/main.css" />	
+	<link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" />
+	<link rel="stylessheet" type=text/css" href="https://cdn.datatables.net/1.10.5/css/jquery.dataTables.css"> 
+	</head>
+	<body>
+	<div id="wrapper">
+<!--	<div id="header"> -->
+<!--	<h1><a href="https://libcc.org/">Virtual Computer Lab(VCL)</a></h1> -->
+	{% if request.user.is_authenticated %}
+		<a id="logout" class="button" href="./logout">Logout</a>
+	{% endif %}
+	
+<!--	</div> -->
+	<div id="sidebar">
+		{% block sidebar %}
+		{% endblock %}
+	</div>
+	<div id="container">
+		{% block content %}
+		{% endblock %}
+	</div>
+	<div id="footer">
+<!--	<a href="https://libcc.org/info">Find out more about libcc.org</a> -->
+	<br/>
+	<img src="/static/admin/img/dcic_logo.jpg">
+	<br/>
+	Powered by an Amazon <a href="http://aws.amazon.com/education/">AWS in education </a> grant
+	<br> Contact <a href="mailto:ssachar@umd.edu">Simranjit Singh</a> for assistance
+	<br> Click  <a href="http://dcic.umd.edu/virtual-computer-labs-vcl/">here</a> for Instructions and Policy
+	{% block content-related %}
+	{% endblock %}
+	<!--<a id="logout" class="button" href="./logout">Logout</a> -->
+	</div>
+	</div>
+	
+
+<!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" ></script>-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="https://cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function(){
+    $('button').click(function(){
+		
+        $('.ack').html('Please Wait... Page will Refresh once the action is complete');
+		$('create_server').html('Creating Machine');
+		$('create_server').prop('Create Machine','Creating Machine');
+		$(this).toggleClass('active');
+		//alert('clicked!');
+		console.log("in ajax");
+    });
+})
+
+</script>
+
+<script>
+function removeNo(){
+$(document).ready(function(){
+    $('button').click(function(){
+
+        $('.ack').html('Please Wait... Page will Refresh once the action is complete');
+                $('create_server').html('Creating Machine');
+                $('create_server').prop('Create Machine','Creating Machine');
+                $(this).toggleClass('active');
+                //alert('clicked!');
+                console.log("in ajax");
+    });
+})
+}
+</script>
+
+<script>
+function confirmDelete(e) {
+ if(confirm('All your data will be lost. Are you sure you want to delete this Machine ?'))
+   alert('Machine Deleted !');
+ else {
+  alert('Cancelled !');
+  e.preventDefault();
+  removeNo();
+ }
+}
+</script>
+
+<script>
+$(document).ready(function() {
+ //   $('#example').dataTable();
+} );
+</script>
+
+<script type="text/JavaScript">
+function validateForm() {
+    var x = document.forms["myForm"]["gname"].value;
+    var id1 = document.forms["myForm"]["box-1"].value;
+    var id2 = document.forms["myForm"]["box-2"].value;
+
+    if (x == null || x == "") {
+        alert("Group Name must be filled out");
+        return false;
+    }
+    else if (id1 == null || id1 == "") {
+        alert("Student Id-1  must be filled out");
+        return false;
+    }
+    else if (id2 == null || id2 == "") {
+        alert("Student Id-2  must be filled out");
+        return false;
+    }
+    else {
+        return true;
+    }
+    
+}
+</script>
+
+<script>
+//Counter to maintain number of textboxes and give them unique id for later reference
+var intTextBox = 2;
+
+/**
+* Function to add textbox element dynamically
+* First we incrementing the counter and creating new div element with unique id
+* Then adding new textbox element to this div and finally appending this div to main content.
+*/
+function addElement() {
+    intTextBox++;
+    var objNewDiv = document.createElement('div');
+    objNewDiv.setAttribute('id', 'div_' + intTextBox);
+    objNewDiv.innerHTML = 'Student Id' + intTextBox + ': <input type="text" id="tb_' + intTextBox + '" name="box-' + intTextBox + '"/>';
+    document.getElementById('content').appendChild(objNewDiv);
+    document.getElementById('box-0').value = intTextBox;
+}
+
+/**
+* Function to remove textbox element dynamically
+* check if counter is more than zero then remove the div element with the counter id and reduce the counter
+* if counter is zero then show alert as no existing textboxes are there
+*/
+function removeElement() {
+    if(0 < intTextBox) {
+        document.getElementById('content').removeChild(document.getElementById('div_' + intTextBox));
+        intTextBox--;
+    } else {
+        alert("No textbox to remove");
+    }
+}
+</script>
+
+
+	</body>
+</html>

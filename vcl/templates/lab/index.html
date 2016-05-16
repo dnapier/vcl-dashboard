@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block sidebar %}
+<div id="sidebar">
+<h1>Lab machine management</h1>
+<p>Hi {{ myuser.first_name }}  Here are your machines.</p>
+<p> You just asked me to: {{ action }}</p>
+<h2>Instructions</h2>
+<dl>
+<dt>Manage machines</dt><dd>Using this app you can start, stop, terminate and create lab machines.</dd>
+<dt>Start</dt><dd>Clicking 'Start Server' will start an existing lab machine.  Note - lab machines automatically shut down after 2 hours of inactivity</dd>
+<dt>Stop</dt><dd>'Stop Server' will stop an existing lab machine.  Stopped machines keep your data and can be started again</dd>
+<dt>Create</dt><dd>You can create lab machines as needed.  Each machine stands alone and does not share your work across them</dd>
+<dt>Terminate</dt><dd>'Terminate Server' deletes this lab machine and removes all of your data.  Only use this when you are completely finished and have saved all of your data to another machine</dd>
+<dt>Connecting</dt><dd>Check instance information once your machine has been launched for login credentials and connection information</dd>
+</dl>
+
+
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+</div>
+{% endblock %}
+{% block content %}
+	
+    <div class="navbar navbar-fixed-top navbar-inverse" role="navigation" style="background-color: #c8c8a9;font-family: 'gulim';">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/"><font color="black">Virtual Computer Lab</font></a>
+	{% if is_instructor == "yes" %}
+	  <a class="navbar-brand" href="./instructor"><div style="color:#000000;width:200px;height:35px;padding:1px;border-left:1px solid lightgrey;">Instructor Dashboard</div></a>
+        {% endif %}
+	<a class="navbar-brand" href="./groups"><div style="color:#000000;width:90px;height:35px;padding:1px;border-left:1px solid lightgrey;">Shared</div></a>
+        <a class="navbar-brand" href="./sandbox"><div style="color:#000000;width:90px;height:35px;padding:1px;border-left:1px solid lightgrey;">Sandbox</div></a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/"><font color="black" size="4">Home</font></a></li>
+            <li><a target="_blank" href="http://dcicblog.umd.edu/curatecloud/2016/03/09/curatecloud/"><font color="black" size="4">About</font></a></li>
+	    <li><a target="_blank" href="http://dcic.umd.edu/vcl-tutorial/"><font color="black" size="4">Help</font></a></li>
+	    <li><a target="_blank" href="https://docs.google.com/forms/d/1kxeEQveJXUsB38aIF8lveN4sxsRCR9qWUeg8X6iWIS4/viewform?c=0&w=1&usp=mail_form_link"><font color="black" size="4">Request Form</font></a></li>
+          <!--  <li><a href="#contact">Contact</a></li> -->
+			<li><a id="logout" href="/accounts/logout/"><font color="black" size="4">Logout</font></a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </div><!-- /.navbar -->
+
+<div class="jumbotron" style="background-color: #83af9b;font-family: 'gulim';color:#FFFFFF;">
+<h1>VIRTUAL COMPUTING LAB</h1>
+<p>On demand desktop. Anytime, Anywhere</p>
+</br>
+<p>The Virtual Computing Lab is brought to you by the iSchool. If you are new to the VCL, we have all the help you will need under the Help tab. Once created, a machine will hold all your data (even if closed or disconnected) until the machine is removed.</p>
+<p>Hi {{ myuser }},  Here are your machines.</p>
+</br> <b><font color="red">{{ error_msg }}</font></b>
+</div>
+
+<script type="text/javascript">
+<!--
+function delayer(){
+    document.location = "./"
+}
+//-->
+</script>
+	
+
+<h1>Manage existing lab machine</h1>
+{% if list_of_machines %}
+
+<div class="row">		
+	{% for key, value in list_of_machines.items %}
+	<div class="col-md-4">
+	<form action="./" method="post">
+	{% csrf_token %}
+	<input type="hidden" name="iid" value="{{ key }}" />
+<!--    
+	<div class="well">
+	{{ value }}
+	</div>
+-->
+	<ul>
+	{% for key2,value2 in value.items %}
+	
+	{% if key2 == 'public_dns' and value2 > '' %}
+		<input type="hidden" name="public_dns" value="{{ value2 }}" />
+		<li class="highlight">
+		{% if value.machine_status == 'initializing' %}
+                <a class="btn btn-info" href='#'> Initializing Machine</a>
+		<img src="/static/admin/img/spinner.gif" height="35" width="30"> (15-20 mins)
+		</br>
+		<script type="text/javascript">
+                setTimeout('delayer()', 720000);
+                </script>
+
+                {% else %}
+                <a class="btn btn-info" href="./downloadrdp/?public_dns={{ value2 }}&lab_auth_info={{ value.lab_auth_info }}"><i class="glyphicon glyphicon-cloud-download"></i>  Download RDP File</a>
+                </br>Machine Address:</br>{{ value2 }}
+                {% endif %}
+	<!--	<li class="highlight">Machine Address: <a class="btn btn-primary" href="./downloadrdp/?public_dns={{ value2 }}"><i class=" icon-eye-open"></i>{{ value2 }}</a>  -->
+		
+	{% else %}
+	{% if key2 == 'instance_name' %}
+		<h2>Lab Machine: {{ value2 }} </h2>
+	{% endif %}
+	{% if key2 == 'instance_type' or key2 == 'lab_auth_info' %}
+<!--        <li><b>{{ key2 }}</b>: {{ value2 }} -->
+	{% endif %}
+	{% endif %}
+        {% if key2 == 'instance_state' and value2 == 'stopped' %}
+        	<button class="btn btn-success has-spinner" type="submit" name="action" value="Start Server"title="Start the stopped machine" />
+			<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+			  Start Machine</button>
+        {% endif %}
+        {% if key2 == 'instance_state' and value2 == 'running' %}
+        	<button class="btn btn-warning has-spinner" type="submit" name="action" value="Stop Server" title="Stop the current running machine"/> 
+			<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+			 Stop Machine</button>
+        {% endif %}
+        {% if key2 == 'instance_state' and value2 == 'stopped'  and value2 != 'terminated' %}
+        	<button class="btn btn-danger has-spinner" id="rmMachine" type="submit" name="action" value="Terminate Server" title="All the data will be lost if you remove the machine" onclick="confirmDelete(event)"/>
+			<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+			  Remove Machine</button>
+		{% endif %}      
+        </li>     
+		
+    {% endfor %}
+</ul> 
+</form> 
+</div> 
+{% endfor %}
+</div>
+{% else %}
+	<p>You have not created any lab machines yet.</p>
+{% endif %}
+<div class="row">
+
+<hr>
+<h1>Create new lab machine</h1>
+
+
+
+{% if list_of_labs %}
+	
+	
+<div class="table-responsive">
+<!--	<form action="./" method="post"> -->
+		<table id="example" class="table table-striped table-bordered">
+			
+			<thead>
+				<tr>
+				 <th>Class</th>
+				 <th>Description</th>
+				 <th>Instructor</th>
+				 <th>Credentials</th>
+				 <th>Instance Control</th>
+				</tr>
+			</thead>	
+			
+				<tbody>
+			{% for lab in list_of_labs %}
+			<form action="./" method ="post">	
+				<input type="hidden" name="iid" value="{{ lab.amazonami }}" />
+				<input type="hidden" name="username" value="{{ myuser.username }}" />
+				<input type="hidden" name="coursecode" value="{{ lab.coursecode }}" />
+				<input type="hidden" name="lab_auth_info" value="{{ lab.lab_auth_info }}" />
+				<input type="hidden" name="instance_type" value="{{ lab.instance_type }}" />
+					<tr>
+						{% csrf_token %}
+						<td>{{ lab.coursename }}</td>
+						<td>{{ lab.labdescription }}</td>
+
+						{% if lab.courseinstructor2 != 'NA' and lab.courseinstructor3 == 'NA' %}
+						<td>
+						<select name="instructor_id">
+								<option value="{{ lab.instructor_id }}">{{ lab.courseinstructor }}</option>
+								<option value="{{ lab.instructor2_id }}">{{ lab.courseinstructor2 }}</option>
+						</select>
+						</td>
+						{% elif lab.courseinstructor2 != 'NA' and lab.courseinstructor3 != 'NA' %}
+                                                <td>
+                                                <select name="instructor_id">
+                                                                <option value="{{ lab.instructor_id }}">{{ lab.courseinstructor }}</option>
+                                                                <option value="{{ lab.instructor2_id }}">{{ lab.courseinstructor2 }}</option>
+								<option value="{{ lab.instructor3_id }}">{{ lab.courseinstructor3 }}</option>
+                                                </select>
+                                                </td>
+						{% else %}
+                                                <td>{{ lab.courseinstructor }}</td>
+						<input type="hidden" name="instructor_id" value="{{ lab.instructor_id }}" />
+						{% endif %}							
+
+						<td>{{ lab.lab_auth_info  }}</td>
+						<td>
+							<button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server" title="Create a New Machine">
+								<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+							Create Machine
+							</button>
+						</td>
+					</tr>
+				</form>
+			{% endfor %}
+				</tbody>
+		</table>
+	
+</div>
+	
+
+	
+	
+{% endif %}
+<h2><div class="ack"></div></h2>
+</div>
+
+{% endblock %}
+
+

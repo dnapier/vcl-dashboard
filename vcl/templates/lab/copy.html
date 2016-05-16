@@ -1,0 +1,343 @@
+<html><!--@(window)--><!--@(document)--><head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+	<link rel="stylesheet" type="text/css" href="/static/public/css/main.css">	
+	<link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css">
+	<style type="text/css"></style></head>
+	<body>
+	<div id="wrapper">
+<!--	<div id="header"> -->
+<!--	<h1><a href="https://libcc.org/">Virtual Computer Lab(VCL)</a></h1> -->
+	
+	
+<!--	</div> -->
+	<div id="sidebar">
+		
+<div id="sidebar">
+<h1>Lab machine management</h1>
+<p>Hi   Here are your machines.</p>
+<p> You just asked me to: Do Nothing</p>
+<h2>Instructions</h2>
+<dl>
+<dt>Manage machines</dt><dd>Using this app you can start, stop, terminate and create lab machines.</dd>
+<dt>Start</dt><dd>Clicking 'Start Server' will start an existing lab machine.  Note - lab machines automatically shut down after 2 hours of inactivity</dd>
+<dt>Stop</dt><dd>'Stop Server' will stop an existing lab machine.  Stopped machines keep your data and can be started again</dd>
+<dt>Create</dt><dd>You can create lab machines as needed.  Each machine stands alone and does not share your work across them</dd>
+<dt>Terminate</dt><dd>'Terminate Server' deletes this lab machine and removes all of your data.  Only use this when you are completely finished and have saved all of your data to another machine</dd>
+<dt>Connecting</dt><dd>Check instance information once your machine has been launched for login credentials and connection information</dd>
+</dl>
+
+
+
+
+</div>
+
+	</div>
+	<div id="container">
+		
+	
+    <div class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="https://ischoolvcl.umd.edu">Virtual Computer Lab</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="https://libcc.org/info">About</a></li>
+          <!--  <li><a href="#contact">Contact</a></li> -->
+			<li><a id="logout" href="/accounts/logout/">Logout</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </div><!-- /.navbar -->
+
+<div class="jumbotron">
+<h1>Virtual Computer Lab</h1>
+<p>Use the Lab to Create your Virtual Labs. Please Stop the server once you are done with your work (Don't worry... Your Data will be Safe). Terminating the Server will erase all your data.</p>
+<p>Hi cvora,  Here are your machines.</p>
+</div>
+	
+<h1>Manage existing lab machine</h1>
+
+	<p>You have not created any lab machines yet.</p>
+
+<div class="row">
+
+<hr>
+<h1>Create new lab machine</h1>
+
+
+	
+<div class="col-md-4">
+<h2>Table</h2>
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered">
+		<thead>
+			<tr>
+             <th>Class</th>
+             <th>Description</th>
+             <th>Instructor</th>
+			 <th>Credentials</th>
+			 <th>Instance Type</th>
+			 <th>Instance Control</th>
+			</tr>
+        </thead>
+	</table>
+</div>
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">INST737</div>-->
+
+		<input type="hidden" name="iid" value="ami-ddb239b4">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="INST737_Spring2013">
+		<ul>
+		<li><b>Class:</b>Digging into Data </li>
+		<li><b>Description:</b>Computer lab for INST 737 </li>
+		<li><b>Instructor:</b>Jordan Boyd-Graber </li>
+		<li><b>Credentials:</b>Username = inst737, password = datascience </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">BMGT 301</div>-->
+
+		<input type="hidden" name="iid" value="ami-ddb239b4">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="BMGT301_Spring2013">
+		<ul>
+		<li><b>Class:</b>Business and Management </li>
+		<li><b>Description:</b>Computer Lab for BMGT 301 Business and Management </li>
+		<li><b>Instructor:</b>Dr. Brian Butler </li>
+		<li><b>Credentials:</b>Username = inst737, password=datascience </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">INST 733</div>-->
+
+		<input type="hidden" name="iid" value="ami-dfd347b6">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="INST733_Spring2013">
+		<ul>
+		<li><b>Class:</b>Database Design </li>
+		<li><b>Description:</b>Computer Lab for Database Design INST 733 </li>
+		<li><b>Instructor:</b>Vedat Diker </li>
+		<li><b>Credentials:</b>Username = inst733, password = norelation </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">INST 734</div>-->
+
+		<input type="hidden" name="iid" value="ami-dfd347b6">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="INST733_Spring2013">
+		<ul>
+		<li><b>Class:</b>Database Design </li>
+		<li><b>Description:</b>Computer Lab for Database Design INST 734 </li>
+		<li><b>Instructor:</b>Vedat Diker1 </li>
+		<li><b>Credentials:</b>Username = inst733, password = norelation </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">Windows Lab</div>-->
+
+		<input type="hidden" name="iid" value="ami-10c27a78">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="WIN">
+		<ul>
+		<li><b>Class:</b>Windows Test Lab </li>
+		<li><b>Description:</b>Computer Lab for Windows </li>
+		<li><b>Instructor:</b>N/A </li>
+		<li><b>Credentials:</b>N/A </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">Windows ArcGIS Lab</div>-->
+
+		<input type="hidden" name="iid" value="ami-3c34b454">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="INST640">
+		<ul>
+		<li><b>Class:</b>Digital Curation </li>
+		<li><b>Description:</b>Computer Lab for INST640 </li>
+		<li><b>Instructor:</b>Richard Marciano </li>
+		<li><b>Credentials:</b>Username = Administrator, Password = 1qaz@WSX </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+<div class="col-md-4">
+	<form action="./" method="post">
+	<input type="hidden" name="csrfmiddlewaretoken" value="cZZqdKoePfDxYpYhm22KmzTPwzFFdeMk">
+
+<!--<div class="well">Digital Curation - ARCGIS Unlocked</div>-->
+
+		<input type="hidden" name="iid" value="ami-d48f07bc">
+		<input type="hidden" name="username" value="cvora">
+		<input type="hidden" name="coursecode" value="INST640">
+		<ul>
+		<li><b>Class:</b>Digital Curation </li>
+		<li><b>Description:</b>Computer Lab for INST640 </li>
+		<li><b>Instructor:</b>Richard Marciano </li>
+		<li><b>Credentials:</b>Username = Administrator, Password = Dclab@umd </li>
+		
+		<select name="instance_type">
+			<option value="t2.micro">Micro</option>
+			<option value="m1.small">Small</option>
+		<!--	<option value="t1.micro">Micro</option>-->
+			<option value="m1.medium">Medium</option>
+		</select>
+		<li><button id="create_server" class="btn btn-primary has-spinner" type="submit" name="action" value="Create Server">
+		<span class="spinner"><i class="icon-spin icon-refresh"></i></span>
+		Create Server</button>
+		</li></ul>
+		
+	</form>
+	
+</div>	
+	
+	
+
+<h2><div class="ack"></div></h2>
+</div>
+
+
+	</div>
+	<div id="footer">
+<!--	<a href="https://libcc.org/info">Find out more about libcc.org</a> -->
+	<br>
+	Powered by an Amazon <a href="http://aws.amazon.com/education/">AWS in education </a> grant
+	
+	
+	<!--<a id="logout" class="button" href="./logout">Logout</a> -->
+	</div>
+	</div>
+	
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script>
+$(document).ready(function(){
+    $('button').click(function(){
+		
+        $('.ack').html('Please Wait... Page will Refresh once the action is complete');
+		$(this).toggleClass('active');
+		//alert('clicked!');
+		console.log("in ajax");
+    });
+})
+</script>
+
+	
+
+</body></html>
