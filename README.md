@@ -1,6 +1,6 @@
 # vcl-dashboard
 
-The application is an web application built on python-django framework. 
+The application is a web application built on python-django framework. 
 
 The logic for application is in the views.py file located at - 
 vcl/apps/lab/views.py
