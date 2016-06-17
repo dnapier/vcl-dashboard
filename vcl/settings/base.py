@@ -20,10 +20,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY',
-                       '^b46d^zsxhrthkq2p7ty14^zov%4@eq@j5e%f(ki_#2rnbp%-l')
+                       'ThisIsNotActuallyASecret')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -55,7 +55,7 @@ MIDDLEWARE_CLASSES = (
     'cas.middleware.CASMiddleware',
 )
 
-CAS_SERVER_URL = 'https://login.umd.edu/cas/'
+CAS_SERVER_URL = 'https://example.com/cas/'
 CAS_VERSION = '2'
 
 AUTHENTICATION_BACKENDS = (
@@ -87,59 +87,34 @@ WSGI_APPLICATION = 'vcl.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': os.getenv('DATABASE_NAME', 'vcl'),
-#         'USER': os.getenv('DATABASE_USER', 'vcl'),
-#         'PASSWORD': os.getenv('DATABASE_PASSWORD', 'password'),
-#         'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
-#         'PORT': os.getenv('DATABASE_PORT', '5432'),
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vcl',
-	'USER': 'root',
-	'PASSWORD':'root',
-	'HOST':'',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
     }
 }
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_ROOT = os.getenv('STATIC_ROOT',
                         os.path.join(BASE_DIR, 'collected_static'))
-
 STATIC_URL = '/static/'
-
 # Additional locations of static files.
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+from settings_local import *

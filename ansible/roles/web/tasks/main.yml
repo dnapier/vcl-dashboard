@@ -1,0 +1,85 @@
+---
+
+- name: Ensure OpenSSl, and libssl are the latest versions
+  apt: name={{ item }} update_cache={{ update_apt_cache }} state=latest
+  with_items:
+    - bash
+    - openssl
+    - libssl-dev
+    - libssl-doc
+  tags: packages
+
+- name: Install base packages
+  apt: name={{ item }} update_cache={{ update_apt_cache }} force=yes state=installed
+  with_items:
+    - build-essential
+    - ntp
+    - htop
+    - libpq-dev
+    - python-dev
+    - python-pip
+    - python-pycurl
+    - supervisor
+    - libav-tools
+  tags: packages
+
+# Create users and groups
+- name: Create the application user
+  user: name={{ gunicorn_user }} state=present
+
+- name: Create the application group
+  group: name={{ gunicorn_group }} system=yes state=present
+
+- name: Add the application user to the application group
+  user: name={{ gunicorn_user }} group={{ gunicorn_group }} state=present
+
+- name: Deploy code
+  copy: src=../../{{ item }} dest=/webapps/vcl/vcl-dashboard/ owner={{ gunicorn_user }} group={{ gunicorn_group }}
+  with_items:
+    - requirements.txt
+    - vcl
+    - manage.py
+  tags: code
+
+- name: Make manage.py executable
+  file: path=/webapps/vcl/vcl-dashboard/manage.py mode=u+rwx
+
+- include: setup_virtualenv.yml
+  tags: virtualenv
+
+- include: install_mysql.yml
+  tags: deploy
+
+- include: setup_django_app.yml
+  tags: deploy
+
+- name: copy boto credentials for AWS API client
+  template: src=boto.cfg.j2 dest=/etc/boto.cfg
+
+- name: copy instance key
+  copy: content={{ amazon_instance_key }} dest=/instance_key.pem mode=0400
+
+# Supervisor setup
+- name: Create the Supervisor config file
+  template: src=supervisor_config.j2
+            dest=/etc/supervisor/conf.d/{{ application_name }}.conf
+            backup=yes
+
+- name: Re-read the Supervisor config files
+  supervisorctl: name={{ application_name }} state=present
+
+- name: Restart Supervisor
+  supervisorctl: name={{ application_name }} state=restarted
+  tags: supervisor
+
+- name: Ensure that the application file permissions are set properly
+  file: path={{ virtualenv_path }}
+        recurse=yes
+        owner={{ gunicorn_user }}
+        group={{ gunicorn_group }}
+        state=directory
+  notify: restart application
+  tags: deploy
+
+- include: setup_nginx.yml
+  tags: nginx

@@ -1,0 +1,38 @@
+---
+
+- name: Install MySQL
+  apt: name={{ item }} update_cache={{ update_apt_cache }} state=installed
+  with_items:
+    - libmysqlclient-dev
+    - mysql-server
+  tags: packages
+
+- name: Start the MySQL service
+  # sudo: yes
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Install with pip
+  pip: virtualenv={{ virtualenv_path }} name=MYSQL-python state=present
+
+- name: Install with pip
+  pip: name=MYSQL-python state=present
+
+- name: Create the MySQL vcl_dump
+  template: src=mysql_schema.sql
+            dest=/etc/mysql_schema.sql
+            backup=yes
+
+- name: update mysql root password for all root accounts
+  mysql_user:
+    name: "{{ db_user }}"
+    host: localhost
+    password: "{{ db_password }}"
+    # check_implicit_admin: yes
+    priv: "*.*:ALL,GRANT"
+
+- mysql_db: name={{ db_name }} state=present login_password={{ db_password }} login_user={{ db_user }}
+
+- mysql_db: state=import name={{ db_name }} target=/etc/mysql_schema.sql login_password={{ db_password }} login_user={{ db_user }}

@@ -30,7 +30,7 @@ def logout_view(request):
     logout(request)
    #return HttpResponseRedirect('registration/logout.html')
     return render_to_response('registration/logout.html',locals(),context_instance=RequestContext(request))
-   
+
 
 @login_required(login_url='/accounts/login/')
 def index(request):
@@ -51,7 +51,7 @@ def index(request):
 		coursecode = request.POST['coursecode']
 		instructor_id = request.POST['instructor_id']
 		credentials = request.POST['lab_auth_info']
-		
+
 #		if iitype == 't1.micro':
 #                  iitype = 't2.micro'
 #                if iitype == 'm1.small':
@@ -62,7 +62,7 @@ def index(request):
 		try:
 		    result = create_instance(username=myuser.username, ami=iid, instance_type=iitype, classcode=coursecode,instructor_id=instructor_id,credentials=credentials)
 		except:
-		    iitype = 't2.micro'		
+		    iitype = 't2.micro'
     		    result = create_instance(username=myuser.username, ami=iid, instance_type=iitype, classcode=coursecode,instructor_id=instructor_id,credentials=credentials)
             if action == 'Terminate Server':
 		instructor.objects.filter(instance_id=iid).delete()
@@ -70,7 +70,7 @@ def index(request):
             if action == 'Download Connection File':
 		public_dns = request.POST['public_dns']
 		result = create_rdp_file(public_dns)
-    
+
     error_msg=''
     if result == "IntegrityError":
        error_msg = 'Only one server is allowed per course'
@@ -79,15 +79,15 @@ def index(request):
     list_of_labs = computerlab.objects.all()
     is_instructor = "no"
     check_instructor = computerlab.objects.filter(instructor_id=myuser.username)
-    check_instructor = computerlab.objects.filter(Q(instructor_id=myuser.username) | Q(instructor2_id=myuser.username)| Q(instructor3_id=myuser.username))	
+    check_instructor = computerlab.objects.filter(Q(instructor_id=myuser.username) | Q(instructor2_id=myuser.username)| Q(instructor3_id=myuser.username))
     if check_instructor.count() > 0:
-	is_instructor = "yes" 	
+	is_instructor = "yes"
     #my_lab_info = computerlab.objects.get(amazonami=list_of_machines['ami_id'])
     return render_to_response('lab/index.html', {'list_of_machines':list_of_machines,"is_instructor":is_instructor, 'error_msg':error_msg,'myuser':myuser, 'action': action, 'list_of_labs':list_of_labs}, context_instance=RequestContext(request))
      #output =  'Your instance is ready to use!  RDP or SSH to: ',instance.dns_name
     #return HttpResponseRedirect(reverse('lab.index', args=(output,)))
 
-    
+
 
 
 ###################################################
@@ -113,7 +113,7 @@ def create_instance(ami='ami-ddb239b4',
                     username = '',
                     classcode='iSchool',
 		    instructor_id='',
-		    credentials='',		
+		    credentials='',
                     azone = 'us-east-1c'):
     """
     Launch an instance and wait for it to start running.
@@ -129,7 +129,7 @@ def create_instance(ami='ami-ddb239b4',
                It will be created if it does not exist.
 
     key_extension The file extension for SSH private key files.
-    
+
     key_dir    The path to the directory containing SSH private keys.
                This is usually ~/.ssh.
 
@@ -164,7 +164,7 @@ apt-get --yes remove --force-yes freenx-server
 apt-get install --force-yes freenx-server
 """
     #user_data = "apt-get install -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'  -f -q -y freenx-server"
-    
+
 #    new_register = instructor(instructor_id=instructor_id,course_id=classcode,student_id=username)
 
     aws_conn = boto.ec2.connection.EC2Connection()
@@ -184,13 +184,13 @@ apt-get install --force-yes freenx-server
 
     if count_of_records > 0:
 	return "IntegrityError"
-	
+
     # Create a connection to EC2 service.
     # You can pass credentials in to the connect_ec2 method explicitly
     # or you can use the default credentials in your ~/.boto config file
     # as we are doing here.
     ec2 = boto.connect_ec2()
-    
+
     # Check to see if specified keypair already exists.
     # If we get an InvalidKeyPair.NotFound error back from EC2,
     # it means that it doesn't exist and we need to create it.
@@ -201,7 +201,7 @@ apt-get install --force-yes freenx-server
             print 'Creating keypair: %s' % key_name
             # Create an SSH key to use when logging into instances.
             key = ec2.create_key_pair(key_name)
-            
+
             # AWS will store the public key but the private key is
             # generated and returned and needs to be stored locally.
             # The save method will also chmod the file to protect
@@ -267,17 +267,17 @@ apt-get install --force-yes freenx-server
         print '.'
         time.sleep(5)
         instance.update()
-        
+
     create_status_alarm(instance.id)
 
-    new_register = instructor(instance_id = instance.id,instructor_id=instructor_id,course_id=classcode,student_id=username,credentials = credentials)	
+    new_register = instructor(instance_id = instance.id,instructor_id=instructor_id,course_id=classcode,student_id=username,credentials = credentials)
     new_register.save()
 
     return 'Your instance has been created and is running at', instance.dns_name, '  Please use NX Viewer or remote desktop to connect.'
 
 def create_rdp_file(request):
 	from django.http import HttpResponse
-	#import StringIO	
+	#import StringIO
 	import csv
 	public_dns=request.GET['public_dns']
 
@@ -288,11 +288,11 @@ def create_rdp_file(request):
                 regex2 = regex1.split('=')
                 username = regex2[1].strip()
         except:
-                username=""	
-	
+                username=""
+
 	import cStringIO as StringIO
 	#response = HttpResponse(tmpfile, content_type="application/x-rdp")
-	#response['Content-Disposition'] = 'attachment; filename=connect.rdp'	
+	#response['Content-Disposition'] = 'attachment; filename=connect.rdp'
 	#writer = csv.writer(response)
 	#myfile = StringIO.StringIO(response)
 	tmpfile = """ screen mode id:i:1
@@ -329,7 +329,7 @@ full address:s:%s
         response = HttpResponse(tmpfile, content_type="application/x-rdp")
         response['Content-Disposition'] = "attachment; filename="+ filename
 	return response
-def start_instance(iid):         
+def start_instance(iid):
     ec2 = boto.connect_ec2()
     reservations = ec2.get_all_instances(filters={'instance-id': iid})
     instance = reservations[0].instances[0]
@@ -339,7 +339,7 @@ def start_instance(iid):
         print '.'
         time.sleep(5)
         instance.update()
-	
+
 def stop_instance(iid):
     ec2 = boto.connect_ec2()
     reservations = ec2.get_all_instances(filters={'instance-id': iid})
@@ -362,8 +362,8 @@ def terminate_instance(iid):
         print '.'
         time.sleep(5)
         instance.update()
-	
-	
+
+
 def list_instances(ami='ami-',
                    instance_type='t1.micro',
                    key_name='instance_key',
@@ -380,15 +380,15 @@ def list_instances(ami='ami-',
                    ssh_passwd=None,
                    username = '',
                    classcode='',
-                   azone = 'us-east-1c'):         
+                   azone = 'us-east-1c'):
 		ec2 = boto.connect_ec2()
 		reservations = ec2.get_all_instances(filters={'tag-value': username})
 		machines = {}
 		for reservation in reservations:
 			instance = reservation.instances[0]
 			instance_tags = instance.tags
-			if instance_tags[u'Name']:	
-				instance_name = instance_tags[u'Name']	
+			if instance_tags[u'Name']:
+				instance_name = instance_tags[u'Name']
 			else:
 				instance_name = "Lab machine"
 			if instance.state != 'terminated':
@@ -397,7 +397,7 @@ def list_instances(ami='ami-',
 				try:
 					comp_lab_info = computerlab.objects.get(amazonami=tmpinstance)
                                 	lab_auth_info = comp_lab_info.lab_auth_info
-                                	connect_info = comp_lab_info.lab_connection_options  
+                                	connect_info = comp_lab_info.lab_connection_options
 					coursecode = comp_lab_info.coursecode
 				except Exception:
 					comp_lab_info = {'lab_auth_info':'simple', 'lab_connection_options':'test2'}
@@ -413,11 +413,11 @@ def list_instances(ami='ami-',
 				machines[instance.id] = {'instance_name': instance_name,'coursecode': coursecode, 'instance_type': instance.instance_type, 'lab_auth_info': lab_auth_info, 'instance_id': instance.id, 'connect_info': connect_info ,'instance_state': instance.state, 'ami_id': instance.image_id, 'machine_status': machine_status, 'public_dns': instance.public_dns_name,'insert':str(instance_name)}
 
 		return machines
-		
+
 
 def create_status_alarm(instance_id):
     ec2_conn = boto.ec2.connect_to_region("us-east-1")
-    
+
     cloudwatch_conn = boto.ec2.cloudwatch.connect_to_region("us-east-1")
 
     reservations = ec2_conn.get_all_instances(filters = {'instance-id': instance_id})
@@ -445,7 +445,7 @@ def create_status_alarm(instance_id):
 
 def delete_status_alarm(instance_id):
     ec2_conn = boto.ec2.connect_to_region("us-east-1")
-    
+
     cloudwatch_conn = boto.ec2.cloudwatch.connect_to_region("us-east-1")
 
     reservations = ec2_conn.get_all_instances(filters = {'instance-id': instance_id})
@@ -464,31 +464,31 @@ def delete_status_alarm(instance_id):
 @login_required(login_url='/accounts/login/')
 def tutor(request):
     myuser = request.user
-    action = 'Do Nothing'		
+    action = 'Do Nothing'
     course = ''
     if request.method == 'GET' and 'course' in request.GET:
-	course = request.GET['course']	
+	course = request.GET['course']
 
     list_of_students = instructor.objects.filter(instructor_id=myuser.username)
 
-    student_instance_ids = []	
-    course_list = []	
+    student_instance_ids = []
+    course_list = []
 
     for student in list_of_students:
 	student_instance_ids.append(student.instance_id)
 	course_list.append(student.course_id)
 
-    course_list = list(set(course_list))   
+    course_list = list(set(course_list))
 
     if len(course) > 0:
 	list_of_students = instructor.objects.filter(instructor_id=myuser.username,course_id=course)
 
     final_student_instance_ids = []
-    aws_conn = boto.ec2.connection.EC2Connection()	
+    aws_conn = boto.ec2.connection.EC2Connection()
     for inst in student_instance_ids:
 	try:
 	    res=aws_conn.get_all_instances(instance_ids=[inst])
-	    final_student_instance_ids.append(inst)	
+	    final_student_instance_ids.append(inst)
 	except:
 	    instructor.objects.filter(instance_id=inst).delete()
 
@@ -504,12 +504,12 @@ def tutor(request):
 	try:
 	    student_data.append({"course_id":student.course_id,"student_id":student.student_id,"credentials":student.credentials,"instance_state":str(instance_states[student.instance_id]['instance_state']),"dsn":instance_states[student.instance_id]['public_dns']})
     	except:
-	    continue	
-    student_data = sorted(student_data, key=lambda k: k['instance_state']) 
-    
+	    continue
+    student_data = sorted(student_data, key=lambda k: k['instance_state'])
+
     if 'action' in request.POST:
 	public_dns = request.POST['public_dns']
-        result = create_rdp_file(public_dns)			
+        result = create_rdp_file(public_dns)
     return render_to_response('lab/instructor.html', {'student_data':student_data,'course_list':course_list, 'myuser':myuser,'action': action}, context_instance=RequestContext(request))
 
 
@@ -597,7 +597,7 @@ def groups(request):
                 instance_type = list(sandbox.objects.values_list('instance_type', flat=True).filter(amazonami=iid))
 
                 result = create_shared_machine(student_ids=student_ids, ami=iid, instance_type=str(instance_type[0]), classcode=str(course_code[0]),student_group=student_group)
-	
+
             if action == 'Terminate Server':
                 instructor.objects.filter(instance_id=iid).delete()
                 result = terminate_instance(iid)
@@ -973,9 +973,7 @@ def list_sandbox_instances(ami='ami-',
                                         machine_status = fetch_status[0].system_status.details['reachability']
                                 except:
                                         machine_status = "stopped"
-	
+
                                 machines[instance.id] = {'instance_name': instance_name,'labname': labname, 'instance_type': instance.instance_type, 'lab_auth_info': lab_auth_info, 'instance_id': instance.id ,'instance_state': instance.state, 'ami_id': instance.image_id, 'machine_status': machine_status, 'public_dns': instance.public_dns_name,'insert':str(instance_name)}
 
                 return machines
-
-
