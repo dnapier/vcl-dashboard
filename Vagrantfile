@@ -22,6 +22,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       ansible.playbook = "ansible/site.yml"
       ansible.groups = { "vcl-webservers" => ["machine"] }
       ansible.extra_vars = "ansible/env_vars/vagrant.yml"
+      # Uncomment to include local AWS test vars, overriding vagrant vars above.
+      # ansible.extra_vars = "~/Dropbox/ansible/group_vars/vcltest.yml"
   end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
