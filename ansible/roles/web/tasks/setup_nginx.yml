@@ -32,8 +32,8 @@
 - name: Ensure Nginx service is started
   service: name=nginx state=started enabled=yes
 
-- name: copy dcic logo file
-  command: sudo cp /webapps/vcl/vcl-dashboard/vcl/static/admin/img/dcic_logo.jpg /webapps/vcl/static/admin/img/dcic_logo.jpg
-
-- name: copy spinner gif file
-  command: sudo cp /webapps/vcl/vcl-dashboard/vcl/static/admin/img/spinner.gif /webapps/vcl/static/admin/img/spinner.gif
+# - name: copy dcic logo file
+#   command: sudo cp /webapps/vcl/vcl-dashboard/vcl/static/admin/img/dcic_logo.jpg /webapps/vcl/static/admin/img/dcic_logo.jpg
+#
+# - name: copy spinner gif file
+#   command: sudo cp /webapps/vcl/vcl-dashboard/vcl/static/admin/img/spinner.gif /webapps/vcl/static/admin/img/spinner.gif

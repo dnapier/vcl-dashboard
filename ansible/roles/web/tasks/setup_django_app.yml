@@ -6,15 +6,10 @@
 - name: copy settings
   template: src=settings_local.py dest={{ project_path }}/settings_local.py
 
-- name: Run the Django syncdb command
-  django_manage:
-    command: syncdb
-    app_path: "{{ project_path }}"
-    virtualenv: "{{ virtualenv_path }}"
-    settings: "{{ django_settings_file }}"
-  environment: django_environment
-  when: run_django_syncdb is defined and run_django_sync_db
-  tags: django.syncdb
+- name: Run Django app migrations
+  become: no
+  django_manage: command=migrate app_path="{{ project_path }}" virtualenv="{{ virtualenv_path }}"
+  tags: django.migrate
 
 - name: Run Django collectstatic
   django_manage:

@@ -2,3 +2,4 @@
 .vagrant
 .git
 .DS_Store
+site.retry
