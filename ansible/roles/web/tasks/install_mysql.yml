@@ -24,13 +24,14 @@
             dest=/etc/mysql_schema.sql
             backup=yes
 
-- name: update mysql root password for all root accounts
+- name: update mysql user/password
   mysql_user: >
     name="{{ db_user }}"
     host=%
     password="{{ db_password }}"
     check_implicit_admin=yes
     priv="{{ db_name }}.*:ALL"
+  notify: restart mysql
 
 - mysql_db: name={{ db_name }} state=present login_password={{ db_password }} login_user={{ db_user }}
 

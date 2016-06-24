@@ -8,3 +8,6 @@
 
 - name: reload nginx
   service: name=nginx state=reloaded
+
+- name: restart mysql
+  service: name=mysql state=restarted

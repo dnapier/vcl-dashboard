@@ -42,7 +42,7 @@
   tags: code
 
 - name: Make manage.py executable
-  file: path=/webapps/vcl/vcl-dashboard/manage.py mode=u+rwx
+  file: path=/webapps/vcl/vcl-dashboard/manage.py mode=a+rx
 
 - include: setup_virtualenv.yml
   tags: virtualenv

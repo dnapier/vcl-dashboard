@@ -6,10 +6,16 @@
 - name: copy settings
   template: src=settings_local.py dest={{ project_path }}/settings_local.py
 
+- name: Make Django app migrations
+  #become: no
+  django_manage: command="makemigrations --noinput" app_path="{{ project_path }}" virtualenv="{{ virtualenv_path }}"
+  tags: django.migrate
+
 - name: Run Django app migrations
   become: no
   django_manage: command=migrate app_path="{{ project_path }}" virtualenv="{{ virtualenv_path }}"
   tags: django.migrate
+
 
 - name: Run Django collectstatic
   django_manage:

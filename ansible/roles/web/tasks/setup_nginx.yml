@@ -13,20 +13,15 @@
   notify: reload nginx
 
 - name: Create the Nginx configuration file
-  template: src=nginx_site_config.j2
-            dest=/etc/nginx/sites-available/{{ application_name }}
-            backup=yes
+  template: src=nginx_site_config.j2 dest=/etc/nginx/sites-available/{{ application_name }}.conf backup=yes
   notify: reload nginx
 
 - name: Ensure that the default site is disabled
-  command: rm /etc/nginx/sites-enabled/default
-           removes=/etc/nginx/sites-enabled/default
+  file: path=/etc/nginx/sites-enabled/default state=absent
   notify: reload nginx
 
 - name: Ensure that the application site is enabled
-  command: ln -s /etc/nginx/sites-available/{{ application_name }}
-           /etc/nginx/sites-enabled/{{ application_name }}
-           creates=/etc/nginx/sites-enabled/{{ application_name }}
+  file: state=link src=/etc/nginx/sites-available/{{ application_name }}.conf dest=/etc/nginx/sites-enabled/{{ application_name }}.conf
   notify: reload nginx
 
 - name: Ensure Nginx service is started
