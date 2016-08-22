@@ -60,17 +60,16 @@
   copy: content={{ amazon_instance_key }} dest=/instance_key.pem mode=0400
 
 # Supervisor setup
-- name: Create the Supervisor config file
-  template: src=supervisor_config.j2
-            dest=/etc/supervisor/conf.d/{{ application_name }}.conf
-            backup=yes
+- name: Create the SystemD config file
+  template: src=systemd.service.j2
+            dest=/etc/systemd/system/{{ application_name }}.service
+            backup=no
 
-- name: Re-read the Supervisor config files
-  supervisorctl: name={{ application_name }} state=present
+# - name: Re-read the Supervisor config files
+#   command: systemctl daemon-reload
 
-- name: Restart Supervisor
-  supervisorctl: name={{ application_name }} state=restarted
-  tags: supervisor
+- name: Restart application
+  service: name={{ application_name }} state=restarted
 
 - name: Ensure that the application file permissions are set properly
   file: path={{ virtualenv_path }}
