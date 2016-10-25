@@ -1,7 +1,7 @@
 from django.shortcuts import render, render_to_response, RequestContext
 
 from django.shortcuts import render_to_response, get_object_or_404
-from .models import computerlab,instructor,sandbox,faculty
+from .models import computerlab, instructor, sandbox, faculty
 from django.template import Context, loader, RequestContext
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
@@ -20,16 +20,19 @@ import boto.manage.server
 import boto.ec2.cloudwatch
 import re
 
+
 # Create your views here.
 def home(request):
     return render_to_response("signup.html",
                               locals(),
                               context_instance=RequestContext(request))
 
+
 def logout_view(request):
     logout(request)
-   #return HttpResponseRedirect('registration/logout.html')
-    return render_to_response('registration/logout.html',locals(),context_instance=RequestContext(request))
+    # return HttpResponseRedirect('registration/logout.html')
+    return render_to_response('registration/logout.html', locals(),
+                              context_instance=RequestContext(request))
 
 
 @login_required(login_url='/accounts/login/')
@@ -39,82 +42,112 @@ def index(request):
     result = ''
     if 'iid' in request.POST:
         iid = request.POST['iid']
-	if 'action' in request.POST:
+        if 'action' in request.POST:
             action = request.POST['action']
             if action == 'Start Server':
                 result = start_instance(iid)
             if action == 'Stop Server':
                 result = stop_instance(iid)
             if action == 'Create Server':
-        	iitype = str(request.POST['instance_type'])
-		iid = request.POST['iid']
-		coursecode = request.POST['coursecode']
-		instructor_id = request.POST['instructor_id']
-		credentials = request.POST['lab_auth_info']
+                iitype = str(request.POST['instance_type'])
+                iid = request.POST['iid']
+                coursecode = request.POST['coursecode']
+                instructor_id = request.POST['instructor_id']
+                credentials = request.POST['lab_auth_info']
 
-#		if iitype == 't1.micro':
+#                if iitype == 't1.micro':
 #                  iitype = 't2.micro'
 #                if iitype == 'm1.small':
 #                  iitype = 'm2.small'
 #                if iitype == 'm1.medium':
 #                  iitype = 'm2.medium'
 
-		try:
-		    result = create_instance(username=myuser.username, ami=iid, instance_type=iitype, classcode=coursecode,instructor_id=instructor_id,credentials=credentials)
-		except:
-		    iitype = 't2.micro'
-    		    result = create_instance(username=myuser.username, ami=iid, instance_type=iitype, classcode=coursecode,instructor_id=instructor_id,credentials=credentials)
+                try:
+                    result = create_instance(username=myuser.username,
+                                             ami=iid,
+                                             instance_type=iitype,
+                                             classcode=coursecode,
+                                             instructor_id=instructor_id,
+                                             credentials=credentials)
+                except:
+                    iitype = 't2.micro'
+                    result = create_instance(username=myuser.username,
+                                             ami=iid,
+                                             instance_type=iitype,
+                                             classcode=coursecode,
+                                             instructor_id=instructor_id,
+                                             credentials=credentials)
             if action == 'Terminate Server':
-		instructor.objects.filter(instance_id=iid).delete()
+                instructor.objects.filter(instance_id=iid).delete()
                 result = terminate_instance(iid)
             if action == 'Download Connection File':
-		public_dns = request.POST['public_dns']
-		result = create_rdp_file(public_dns)
+                public_dns = request.POST['public_dns']
+                result = create_rdp_file(public_dns)
 
-    error_msg=''
+    error_msg = ''
     if result == "IntegrityError":
-       error_msg = 'Only one server is allowed per course'
+        error_msg = 'Only one server is allowed per course'
 
     list_of_machines = list_instances(username=myuser.username)
     list_of_labs = computerlab.objects.all()
     is_instructor = "no"
-    check_instructor = computerlab.objects.filter(instructor_id=myuser.username)
-    check_instructor = computerlab.objects.filter(Q(instructor_id=myuser.username) | Q(instructor2_id=myuser.username)| Q(instructor3_id=myuser.username))
+    check_instructor = computerlab.objects.filter(
+            instructor_id=myuser.username
+        )
+    check_instructor = computerlab.objects.filter(
+            Q(instructor_id=myuser.username) |
+            Q(instructor2_id=myuser.username) |
+            Q(instructor3_id=myuser.username)
+        )
     if check_instructor.count() > 0:
-	is_instructor = "yes"
-    #my_lab_info = computerlab.objects.get(amazonami=list_of_machines['ami_id'])
-    return render_to_response('lab/index.html', {'list_of_machines':list_of_machines,"is_instructor":is_instructor, 'error_msg':error_msg,'myuser':myuser, 'action': action, 'list_of_labs':list_of_labs}, context_instance=RequestContext(request))
-     #output =  'Your instance is ready to use!  RDP or SSH to: ',instance.dns_name
-    #return HttpResponseRedirect(reverse('lab.index', args=(output,)))
-
-
-
+        is_instructor = "yes"
+    # my_lab_info = computerlab.objects.get(
+    #        amazonami=list_of_machines['ami_id']
+    #    )
+    return render_to_response(
+            'lab/index.html',
+            {'list_of_machines': list_of_machines,
+             "is_instructor": is_instructor,
+             'error_msg': error_msg,
+             'myuser': myuser,
+             'action': action,
+             'list_of_labs': list_of_labs},
+            context_instance=RequestContext(request)
+        )
+    # output =  'Your instance is ready to use!
+    #            RDP or SSH to: ',instance.dns_name
+    # return HttpResponseRedirect(reverse(
+    #            'lab.index', args=(output,)))
 
 ###################################################
+#                                                 #
+# code from vcl                                   #
+#                                                 #
+###################################################
 
-#code from vcl
 
+def create_instance(
+        ami='ami-ddb239b4',
+        instance_type='t1.micro',
+        # key_name='aws_vcl_key',
+        key_name='instance_key',
+        key_extension='.pem',
+        key_dir='~/.ssh',
+        # key_dir='/home/infoadmin/keys',
+        group_name='default',
+        ssh_port=22,
+        cidr='0.0.0.0/0',
+        tag='LBSC_670',
+        user_data=None,
+        cmd_shell=True,
+        login_user='ubuntu',
+        ssh_passwd=None,
+        username='',
+        classcode='iSchool',
+        instructor_id='',
+        credentials='',
+        azone='us-east-1c'):
 
-def create_instance(ami='ami-ddb239b4',
-                    instance_type='t1.micro',
-#                    key_name='aws_vcl_key',
-		    key_name='instance_key',
-                    key_extension='.pem',
-                    key_dir='~/.ssh',
-#		    key_dir='/home/infoadmin/keys',
-                    group_name='default',
-                    ssh_port=22,
-                    cidr='0.0.0.0/0',
-                    tag='LBSC_670',
-                    user_data=None,
-                    cmd_shell=True,
-                    login_user='ubuntu',
-                    ssh_passwd=None,
-                    username = '',
-                    classcode='iSchool',
-		    instructor_id='',
-		    credentials='',
-                    azone = 'us-east-1c'):
     """
     Launch an instance and wait for it to start running.
     Returns a tuple consisting of the Instance object and the CmdShell
@@ -157,33 +190,43 @@ def create_instance(ami='ami-ddb239b4',
                passphrase.
     """
     cmd = None
-    user_data ="""#!/bin/bash
+    user_data = """#!/bin/bash
 set -e -x
 export DEBIAN_FRONTEND=noninteractive
 apt-get --yes remove --force-yes freenx-server
 apt-get install --force-yes freenx-server
 """
-    #user_data = "apt-get install -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'  -f -q -y freenx-server"
-
-#    new_register = instructor(instructor_id=instructor_id,course_id=classcode,student_id=username)
+    # user_data =
+    #   "apt-get install -o Dpkg::Options::='--force-confdef' \
+    #   -o Dpkg::Options::='--force-confold'  -f -q -y freenx-server"
+    # new_register =
+    #   instructor(instructor_id=instructor_id,course_id=classcode,student_id=username)
 
     aws_conn = boto.ec2.connection.EC2Connection()
-    student_records = instructor.objects.filter(course_id=classcode,student_id=username)
+    student_records = instructor.objects.filter(
+            course_id=classcode, student_id=username
+        )
     for student in student_records:
-	try:
-           res=aws_conn.get_all_instances(instance_ids=[student.instance_id])
-	   instances = [i for r in res for i in r.instances]
-    	   for i in instances:
-		if str(i._state) == 'terminated(48)':
-		   instructor.objects.filter(instance_id=student.instance_id).delete()
-	except:
-	   instructor.objects.filter(instance_id=student.instance_id).delete()
+        try:
+            res = aws_conn.get_all_instances(
+                    instance_ids=[student.instance_id]
+                    )
+            instances = [i for r in res for i in r.instances]
+            for i in instances:
+                if str(i._state) == 'terminated(48)':
+                    instructor.objects.filter(
+                            instance_id=student.instance_id
+                        ).delete()
+        except:
+            instructor.objects.filter(instance_id=student.instance_id).delete()
 
-
-    count_of_records = instructor.objects.filter(course_id=classcode,student_id=username).count()
+    count_of_records = instructor.objects.filter(
+            course_id=classcode,
+            student_id=username
+        ).count()
 
     if count_of_records > 0:
-	return "IntegrityError"
+        return "IntegrityError"
 
     # Create a connection to EC2 service.
     # You can pass credentials in to the connect_ec2 method explicitly
@@ -234,11 +277,13 @@ apt-get install --force-yes freenx-server
         else:
             raise
 
-	#find the volume for the user and class in question
-	#volumes = ec2.get_all_volumes(filters={'tag-value': username, 'tag-value':classcode})
-	#Attach the volume to the server
-	#result = volumes.attach(instance, '/dev/sdf')
-	#define user data to mount the volume
+    # find the volume for the user and class in question
+    # volumes = ec2.get_all_volumes(
+    #     filters={'tag-value': username, 'tag-value':classcode}
+    #     )
+    # Attach the volume to the server
+    # result = volumes.attach(instance, '/dev/sdf')
+    # define user data to mount the volume
     # Now start up the instance.  The run_instances method
     # has many, many parameters but these are all we need
     # for now.
@@ -254,7 +299,7 @@ apt-get install --force-yes freenx-server
 
     instance = reservation.instances[0]
     machinename = classcode + "--" + username + "--Instructor:" + instructor_id
-    #Add user tags to it
+    # Add user tags to it
     instance.add_tag('username', username)
     instance.add_tag('classcode', classcode)
     instance.add_tag('Name', machinename)
@@ -270,32 +315,43 @@ apt-get install --force-yes freenx-server
 
     create_status_alarm(instance.id)
 
-    new_register = instructor(instance_id = instance.id,instructor_id=instructor_id,course_id=classcode,student_id=username,credentials = credentials)
+    new_register = instructor(
+            instance_id=instance.id,
+            instructor_id=instructor_id,
+            course_id=classcode,
+            student_id=username,
+            credentials=credentials
+        )
     new_register.save()
 
-    return 'Your instance has been created and is running at', instance.dns_name, '  Please use NX Viewer or remote desktop to connect.'
+    return (
+        'Your instance has been created and is running at',
+        instance.dns_name,
+        '  Please use NX Viewer or remote desktop to connect.'
+        )
+
 
 def create_rdp_file(request):
-	from django.http import HttpResponse
-	#import StringIO
-	import csv
-	public_dns=request.GET['public_dns']
+    from django.http import HttpResponse
+    # import StringIO
+    import csv
+    public_dns = request.GET['public_dns']
 
-	lab_auth_info = request.GET['lab_auth_info']
-        try:
-                find = re.compile(r"^[^,]*")
-                regex1 = re.search(find, lab_auth_info).group(0)
-                regex2 = regex1.split('=')
-                username = regex2[1].strip()
-        except:
-                username=""
+    lab_auth_info = request.GET['lab_auth_info']
+    try:
+            find = re.compile(r"^[^,]*")
+            regex1 = re.search(find, lab_auth_info).group(0)
+            regex2 = regex1.split('=')
+            username = regex2[1].strip()
+    except:
+            username = ""
 
-	import cStringIO as StringIO
-	#response = HttpResponse(tmpfile, content_type="application/x-rdp")
-	#response['Content-Disposition'] = 'attachment; filename=connect.rdp'
-	#writer = csv.writer(response)
-	#myfile = StringIO.StringIO(response)
-	tmpfile = """ screen mode id:i:1
+    import cStringIO as StringIO
+    # response = HttpResponse(tmpfile, content_type="application/x-rdp")
+    # response['Content-Disposition'] = 'attachment; filename=connect.rdp'
+    # writer = csv.writer(response)
+    # myfile = StringIO.StringIO(response)
+    tmpfile = """ screen mode id:i:1
 desktopwidth:i:1280
 desktopheight:i:720
 session bpp:i:32
@@ -320,15 +376,17 @@ bitmapcachepersistenable:i:1
 full address:s:%s
 """ % (public_dns)
 
-	#tmpfile = tmpfile+"full address:s:"+public_dns
-	#writer.writerow([tmpfile])
-	tmpfile = tmpfile.format(username)
-	find = re.compile(r"^[^.]*")
-	filename = re.search(find, public_dns).group(0)
-	filename = filename + ".rdp"
-        response = HttpResponse(tmpfile, content_type="application/x-rdp")
-        response['Content-Disposition'] = "attachment; filename="+ filename
-	return response
+    # tmpfile = tmpfile+"full address:s:"+public_dns
+    # writer.writerow([tmpfile])
+    tmpfile = tmpfile.format(username)
+    find = re.compile(r"^[^.]*")
+    filename = re.search(find, public_dns).group(0)
+    filename = filename + ".rdp"
+    response = HttpResponse(tmpfile, content_type="application/x-rdp")
+    response['Content-Disposition'] = "attachment; filename=" + filename
+    return response
+
+
 def start_instance(iid):
     ec2 = boto.connect_ec2()
     reservations = ec2.get_all_instances(filters={'instance-id': iid})
@@ -340,6 +398,7 @@ def start_instance(iid):
         time.sleep(5)
         instance.update()
 
+
 def stop_instance(iid):
     ec2 = boto.connect_ec2()
     reservations = ec2.get_all_instances(filters={'instance-id': iid})
@@ -350,6 +409,7 @@ def stop_instance(iid):
         print '.'
         time.sleep(5)
         instance.update()
+
 
 def terminate_instance(iid):
     ec2 = boto.connect_ec2()
@@ -369,7 +429,7 @@ def list_instances(ami='ami-',
                    key_name='instance_key',
                    key_extension='.pem',
                    key_dir='~/.ssh',
-#		   key_dir='/home/infoadmin/keys',
+                   # key_dir='/home/infoadmin/keys',
                    group_name='vcl_lab',
                    ssh_port=22,
                    cidr='0.0.0.0/0',
@@ -378,41 +438,61 @@ def list_instances(ami='ami-',
                    cmd_shell=True,
                    login_user='ubuntu',
                    ssh_passwd=None,
-                   username = '',
+                   username='',
                    classcode='',
-                   azone = 'us-east-1c'):
-		ec2 = boto.connect_ec2()
-		reservations = ec2.get_all_instances(filters={'tag-value': username})
-		machines = {}
-		for reservation in reservations:
-			instance = reservation.instances[0]
-			instance_tags = instance.tags
-			if instance_tags[u'Name']:
-				instance_name = instance_tags[u'Name']
-			else:
-				instance_name = "Lab machine"
-			if instance.state != 'terminated':
-				tmpinstance = str(instance.image_id)
-				#comp_lab_info = {'lab_auth_info':'Sorry, I could not find any authentication information', 'lab_connection_options':'Sorry, I could not find connection options!'}
-				try:
-					comp_lab_info = computerlab.objects.get(amazonami=tmpinstance)
-                                	lab_auth_info = comp_lab_info.lab_auth_info
-                                	connect_info = comp_lab_info.lab_connection_options
-					coursecode = comp_lab_info.coursecode
-				except Exception:
-					comp_lab_info = {'lab_auth_info':'simple', 'lab_connection_options':'test2'}
-					lab_auth_info = comp_lab_info['lab_auth_info']
-					coursecode = 'none'
-					connect_info = comp_lab_info['lab_connection_options']
+                   azone='us-east-1c'):
+    ec2 = boto.connect_ec2()
+    reservations = ec2.get_all_instances(filters={'tag-value': username})
+    machines = {}
+    for reservation in reservations:
+        instance = reservation.instances[0]
+        instance_tags = instance.tags
+        if instance_tags[u'Name']:
+            instance_name = instance_tags[u'Name']
+        else:
+            instance_name = "Lab machine"
+        if instance.state != 'terminated':
+            tmpinstance = str(instance.image_id)
+            # comp_lab_info = {
+            # 'lab_auth_info':
+            # 'Sorry, I could not find any authentication information',
+            # 'lab_connection_options':
+            # 'Sorry, I could not find connection options!'}
+            try:
+                comp_lab_info = computerlab.objects.get(amazonami=tmpinstance)
+                lab_auth_info = comp_lab_info.lab_auth_info
+                connect_info = comp_lab_info.lab_connection_options
+                coursecode = comp_lab_info.coursecode
+            except Exception:
+                comp_lab_info = {'lab_auth_info': 'simple',
+                                 'lab_connection_options': 'test2'}
+                lab_auth_info = comp_lab_info['lab_auth_info']
+                coursecode = 'none'
+                connect_info = comp_lab_info['lab_connection_options']
 
-				try:
-                                        fetch_status = ec2.get_all_instance_status(instance_ids=instance.id)
-                                        machine_status = fetch_status[0].system_status.details['reachability']
-                                except:
-                                        machine_status = "stopped"
-				machines[instance.id] = {'instance_name': instance_name,'coursecode': coursecode, 'instance_type': instance.instance_type, 'lab_auth_info': lab_auth_info, 'instance_id': instance.id, 'connect_info': connect_info ,'instance_state': instance.state, 'ami_id': instance.image_id, 'machine_status': machine_status, 'public_dns': instance.public_dns_name,'insert':str(instance_name)}
+            try:
+                fetch_status = ec2.get_all_instance_status(
+                        instance_ids=instance.id
+                        )
+                machine_status = fetch_status[0].system_status.details[
+                        'reachability'
+                        ]
+            except:
+                machine_status = "stopped"
+            machines[instance.id] = {
+                    'instance_name': instance_name,
+                    'coursecode': coursecode,
+                    'instance_type': instance.instance_type,
+                    'lab_auth_info': lab_auth_info,
+                    'instance_id': instance.id,
+                    'connect_info': connect_info,
+                    'instance_state': instance.state,
+                    'ami_id': instance.image_id,
+                    'machine_status': machine_status,
+                    'public_dns': instance.public_dns_name,
+                    'insert': str(instance_name)}
 
-		return machines
+    return machines
 
 
 def create_status_alarm(instance_id):
@@ -420,7 +500,9 @@ def create_status_alarm(instance_id):
 
     cloudwatch_conn = boto.ec2.cloudwatch.connect_to_region("us-east-1")
 
-    reservations = ec2_conn.get_all_instances(filters = {'instance-id': instance_id})
+    reservations = ec2_conn.get_all_instances(
+            filters={'instance-id': instance_id}
+            )
     if reservations and reservations[0].instances:
         instance = reservations[0].instances[0]
         instance_name = instance.tags['Name']
@@ -428,34 +510,40 @@ def create_status_alarm(instance_id):
         print "Invalid instance-id!"
         sys.exit(1)
     alarm = boto.ec2.cloudwatch.alarm.MetricAlarm(
-        connection = cloudwatch_conn,
-        name = instance_id + " : " + instance_name + "-CPU Utilization less than 5%",
-        metric = 'CPUUtilization',
-        namespace = 'AWS/EC2',
-        statistic = 'Maximum',
-        comparison = '<=',
-        description = 'Alarm that triggers when the instance CPU goes less than 5% for 1 hour',
-        threshold = 5,
-        period = 3600,
-        evaluation_periods = 2,
-        dimensions = {'InstanceId':instance_id},
-        alarm_actions = 'arn:aws:automate:us-east-1:ec2:stop',
+        connection=cloudwatch_conn,
+        name=instance_id + " : " +
+        instance_name + "-CPU Utilization less than 5%",
+        metric='CPUUtilization',
+        namespace='AWS/EC2',
+        statistic='Maximum',
+        comparison='<=',
+        description='Alarm that triggers when the '
+        'instance CPU goes less than 5% for 1 hour',
+        threshold=5,
+        period=3600,
+        evaluation_periods=2,
+        dimensions={'InstanceId': instance_id},
+        alarm_actions='arn:aws:automate:us-east-1:ec2:stop',
     )
     cloudwatch_conn.put_metric_alarm(alarm)
+
 
 def delete_status_alarm(instance_id):
     ec2_conn = boto.ec2.connect_to_region("us-east-1")
 
     cloudwatch_conn = boto.ec2.cloudwatch.connect_to_region("us-east-1")
 
-    reservations = ec2_conn.get_all_instances(filters = {'instance-id': instance_id})
+    reservations = ec2_conn.get_all_instances(
+            filters={'instance-id': instance_id}
+            )
     if reservations and reservations[0].instances:
         instance = reservations[0].instances[0]
         instance_name = instance.tags['Name']
     else:
         print "Invalid instance-id!"
 
-    alarm_name = instance_id + " : " + instance_name + "-CPU Utilization less than 10%";
+    alarm_name = instance_id + " : " + \
+        instance_name + "-CPU Utilization less than 10%"
     list_alarms = []
     list_alarms.append(alarm_name)
     cloudwatch_conn.delete_alarms(list_alarms)
@@ -467,7 +555,7 @@ def tutor(request):
     action = 'Do Nothing'
     course = ''
     if request.method == 'GET' and 'course' in request.GET:
-	course = request.GET['course']
+        course = request.GET['course']
 
     list_of_students = instructor.objects.filter(instructor_id=myuser.username)
 
@@ -475,43 +563,60 @@ def tutor(request):
     course_list = []
 
     for student in list_of_students:
-	student_instance_ids.append(student.instance_id)
-	course_list.append(student.course_id)
+        student_instance_ids.append(student.instance_id)
+        course_list.append(student.course_id)
 
     course_list = list(set(course_list))
 
     if len(course) > 0:
-	list_of_students = instructor.objects.filter(instructor_id=myuser.username,course_id=course)
+        list_of_students = instructor.objects.filter(
+                instructor_id=myuser.username, course_id=course
+                )
 
     final_student_instance_ids = []
     aws_conn = boto.ec2.connection.EC2Connection()
     for inst in student_instance_ids:
-	try:
-	    res=aws_conn.get_all_instances(instance_ids=[inst])
-	    final_student_instance_ids.append(inst)
-	except:
-	    instructor.objects.filter(instance_id=inst).delete()
+        try:
+            res = aws_conn.get_all_instances(instance_ids=[inst])
+            final_student_instance_ids.append(inst)
+        except:
+            instructor.objects.filter(instance_id=inst).delete()
 
     instance_states = {}
 #    aws_conn = boto.ec2.connection.EC2Connection()
-    res=aws_conn.get_all_instances(instance_ids=final_student_instance_ids)
+    res = aws_conn.get_all_instances(instance_ids=final_student_instance_ids)
     instances = [i for r in res for i in r.instances]
     for i in instances:
-        instance_states[i.id] = {'instance_state': i._state, 'public_dns': i.public_dns_name}
+        instance_states[i.id] = {
+                'instance_state': i._state, 'public_dns': i.public_dns_name
+                }
 
     student_data = []
     for student in list_of_students:
-	try:
-	    student_data.append({"course_id":student.course_id,"student_id":student.student_id,"credentials":student.credentials,"instance_state":str(instance_states[student.instance_id]['instance_state']),"dsn":instance_states[student.instance_id]['public_dns']})
-    	except:
-	    continue
+        try:
+            student_data.append({"course_id": student.course_id,
+                                 "student_id": student.student_id,
+                                 "credentials": student.credentials,
+                                 "instance_state": str(
+                                    instance_states[student.instance_id]
+                                                   ['instance_state']
+                                    ),
+                                 "dsn": instance_states[student.instance_id]
+                                                       ['public_dns']}
+                                )
+        except:
+            continue
     student_data = sorted(student_data, key=lambda k: k['instance_state'])
 
     if 'action' in request.POST:
-	public_dns = request.POST['public_dns']
+        public_dns = request.POST['public_dns']
         result = create_rdp_file(public_dns)
-    return render_to_response('lab/instructor.html', {'student_data':student_data,'course_list':course_list, 'myuser':myuser,'action': action}, context_instance=RequestContext(request))
-
+    return render_to_response('lab/instructor.html',
+                              {'student_data': student_data,
+                               'course_list': course_list,
+                               'myuser': myuser,
+                               'action': action},
+                              context_instance=RequestContext(request))
 
 
 def group1(request):
@@ -533,24 +638,41 @@ def group1(request):
     course_list = list(set(course_list))
 
     if len(course) > 0:
-        list_of_students = instructor.objects.filter(instructor_id=myuser.username,course_id=course)
+        list_of_students = instructor.objects.filter(
+                instructor_id=myuser.username, course_id=course
+                )
 
     instance_states = {}
     aws_conn = boto.ec2.connection.EC2Connection()
-    res=aws_conn.get_all_instances(instance_ids=student_instance_ids)
+    res = aws_conn.get_all_instances(instance_ids=student_instance_ids)
     instances = [i for r in res for i in r.instances]
     for i in instances:
-        instance_states[i.id] = {'instance_state': i._state, 'public_dns': i.public_dns_name}
+        instance_states[i.id] = {'instance_state': i._state,
+                                 'public_dns': i.public_dns_name}
 
     student_data = []
     for student in list_of_students:
-        student_data.append({"course_id":student.course_id,"student_id":student.student_id,"credentials":student.credentials,"instance_state":str(instance_states[student.instance_id]['instance_state']),"dsn":instance_states[student.instance_id]['public_dns']})
+        student_data.append({"course_id": student.course_id,
+                             "student_id": student.student_id,
+                             "credentials": student.credentials,
+                             "instance_state": str(
+                                 instance_states[student.instance_id]
+                                                ['instance_state']),
+                             "dsn": instance_states[student.instance_id]
+                                                   ['public_dns']}
+                            )
     student_data = sorted(student_data, key=lambda k: k['instance_state'])
 
     if 'action' in request.POST:
         public_dns = request.POST['public_dns']
         result = create_rdp_file(public_dns)
-    return render_to_response('lab/groups.html', {'student_data':student_data,'course_list':course_list, 'myuser':myuser,'action': action}, context_instance=RequestContext(request))
+    return render_to_response('lab/groups.html',
+                              {'student_data': student_data,
+                               'course_list': course_list,
+                               'myuser': myuser,
+                               'action': action},
+                              context_instance=RequestContext(request)
+                              )
 
 
 @login_required(login_url='/accounts/login/')
@@ -560,8 +682,8 @@ def groups(request):
     result = ''
     coursecode = ''
     group_size = ''
-    iid=''
-    data=''
+    iid = ''
+    data = ''
     if 'iid' in request.POST:
         iid = request.POST['iid']
         if 'action' in request.POST:
@@ -575,28 +697,51 @@ def groups(request):
                 student_group = request.POST['gname']
                 group_size = int(request.POST['box-0'])
                 student_ids = []
-                for num in range(1,group_size+1):
-                        box = "box-" + str(num);
-                        student_id = request.POST[box];
-                        student_ids.append(student_id);
-                course_code = list(computerlab.objects.values_list('coursecode', flat=True).filter(amazonami=iid))
-                instance_type = list(computerlab.objects.values_list('instance_type', flat=True).filter(amazonami=iid))
+                for num in range(1, group_size+1):
+                        box = "box-" + str(num)
+                        student_id = request.POST[box]
+                        student_ids.append(student_id)
+                course_code = list(computerlab.objects.values_list(
+                    'coursecode', flat=True).filter(amazonami=iid))
+                instance_type = list(computerlab.objects.values_list(
+                    'instance_type', flat=True).filter(amazonami=iid))
 
-                result = create_shared_machine(student_ids=student_ids, ami=iid, instance_type=str(instance_type[0]), classcode=str(course_code[0]),student_group=student_group)
+                result = create_shared_machine(student_ids=student_ids,
+                                               ami=iid,
+                                               instance_type=str(
+                                                   instance_type[0]),
+                                               classcode=str(
+                                                   course_code[0]),
+                                               student_group=student_group
+                                               )
 
-	    if action == 'Create Sandbox':
+            if action == 'Create Sandbox':
                 iid = request.POST['iid']
                 student_group = request.POST['gname']
                 group_size = int(request.POST['box-0'])
                 student_ids = []
-                for num in range(1,group_size+1):
-                        box = "box-" + str(num);
-                        student_id = request.POST[box];
-                        student_ids.append(student_id);
-                course_code = list(sandbox.objects.values_list('labname', flat=True).filter(amazonami=iid))
-                instance_type = list(sandbox.objects.values_list('instance_type', flat=True).filter(amazonami=iid))
+                for num in range(1, group_size+1):
+                        box = "box-" + str(num)
+                        student_id = request.POST[box]
+                        student_ids.append(student_id)
+                course_code = list(
+                        sandbox.objects.values_list(
+                            'labname',
+                            flat=True
+                            ).filter(amazonami=iid))
+                instance_type = list(
+                        sandbox.objects.values_list(
+                            'instance_type',
+                            flat=True
+                            ).filter(amazonami=iid))
 
-                result = create_shared_machine(student_ids=student_ids, ami=iid, instance_type=str(instance_type[0]), classcode=str(course_code[0]),student_group=student_group)
+                result = create_shared_machine(
+                        student_ids=student_ids,
+                        ami=iid,
+                        instance_type=str(instance_type[0]),
+                        classcode=str(course_code[0]),
+                        student_group=student_group
+                        )
 
             if action == 'Terminate Server':
                 instructor.objects.filter(instance_id=iid).delete()
@@ -605,38 +750,55 @@ def groups(request):
                 public_dns = request.POST['public_dns']
                 result = create_rdp_file(public_dns)
 
-    error_msg=data
+    error_msg = data
 
     list_of_machines = list_shared_instances(username=myuser.username)
     list_of_labs = computerlab.objects.all()
     list_of_sandbox = sandbox.objects.all()
     is_instructor = "no"
-    check_instructor = computerlab.objects.filter(instructor_id=myuser.username)
-    check_instructor = computerlab.objects.filter(Q(instructor_id=myuser.username) | Q(instructor2_id=myuser.username)| Q(instructor3_id=myuser.username))
+    check_instructor = computerlab.objects.filter(
+            instructor_id=myuser.username
+            )
+    check_instructor = computerlab.objects.filter(
+            Q(instructor_id=myuser.username) |
+            Q(instructor2_id=myuser.username) |
+            Q(instructor3_id=myuser.username)
+            )
     if check_instructor.count() > 0:
         is_instructor = "yes"
-    return render_to_response('lab/groups_new.html', {'list_of_machines':list_of_machines,'list_of_sandbox':list_of_sandbox,"is_instructor":is_instructor, 'error_msg':error_msg,'myuser':myuser, 'action': action, 'list_of_labs':list_of_labs}, context_instance=RequestContext(request))
+    return render_to_response(
+            'lab/groups_new.html',
+            {'list_of_machines': list_of_machines,
+             'list_of_sandbox': list_of_sandbox,
+             "is_instructor": is_instructor,
+             'error_msg': error_msg,
+             'myuser': myuser,
+             'action': action,
+             'list_of_labs': list_of_labs},
+            context_instance=RequestContext(request)
+            )
+
 
 def create_shared_machine(ami='ami-ddb239b4',
-                    instance_type='t1.micro',
-#                    key_name='aws_vcl_key',
-                    key_name='instance_key',
-                    key_extension='.pem',
-                    key_dir='~/.ssh',
-#                   key_dir='/home/infoadmin/keys',
-                    group_name='default',
-                    ssh_port=22,
-                    cidr='0.0.0.0/0',
-                    tag='LBSC_670',
-                    user_data=None,
-                    cmd_shell=True,
-                    login_user='ubuntu',
-                    ssh_passwd=None,
-                    username = '',
-                    classcode='iSchool',
-                    student_group='',
-                    student_ids=[],
-                    azone = 'us-east-1c'):
+                          instance_type='t1.micro',
+                          # key_name='aws_vcl_key',
+                          key_name='instance_key',
+                          key_extension='.pem',
+                          key_dir='~/.ssh',
+                          # key_dir='/home/infoadmin/keys',
+                          group_name='default',
+                          ssh_port=22,
+                          cidr='0.0.0.0/0',
+                          tag='LBSC_670',
+                          user_data=None,
+                          cmd_shell=True,
+                          login_user='ubuntu',
+                          ssh_passwd=None,
+                          username='',
+                          classcode='iSchool',
+                          student_group='',
+                          student_ids=[],
+                          azone='us-east-1c'):
 
     ec2 = boto.connect_ec2()
 
@@ -667,7 +829,7 @@ def create_shared_machine(ami='ami-ddb239b4',
     except ec2.ResponseError, e:
         if e.code == 'InvalidGroup.NotFound':
             print 'Creating Security Group: %s' % group_name
-	    # Create a security group to control access to instance via SSH.
+            # Create a security group to control access to instance via SSH.
             group = ec2.create_security_group(group_name,
                                               'A group that allows SSH access')
         else:
@@ -695,7 +857,7 @@ def create_shared_machine(ami='ami-ddb239b4',
 
     instance = reservation.instances[0]
     machinename = "shared--" + classcode + "--" + student_group
-    #Add user tags to it
+    # Add user tags to it
 
     instance.add_tag('student_ids', student_ids)
     instance.add_tag('classcode', classcode)
@@ -713,57 +875,76 @@ def create_shared_machine(ami='ami-ddb239b4',
 
     create_status_alarm(instance.id)
 
-
-    return 'Your instance has been created and is running at', instance.dns_name, '  Please use NX Viewer or remote desktop to connect.'
+    return 'Your instance has been created and is running at',
+    instance.dns_name, '  Please use NX Viewer or remote desktop to connect.'
 
 
 def list_shared_instances(ami='ami-',
-                   instance_type='t1.micro',
-                   key_name='instance_key',
-                   key_extension='.pem',
-                   key_dir='~/.ssh',
-#                  key_dir='/home/infoadmin/keys',
-                   group_name='vcl_lab',
-                   ssh_port=22,
-                   cidr='0.0.0.0/0',
-                   tag='LBSC_670',
-                   user_data=None,
-                   cmd_shell=True,
-                   login_user='ubuntu',
-                   ssh_passwd=None,
-                   username = '',
-                   classcode='',
-                   azone = 'us-east-1c'):
-                ec2 = boto.connect_ec2()
-                reservations = ec2.get_all_instances(filters={'tag:student_ids':"*"+username+"*"})
-                machines = {}
-                for reservation in reservations:
-                        instance = reservation.instances[0]
-                        instance_tags = instance.tags
-			if instance_tags[u'Name']:
-                                instance_name = instance_tags[u'Name']
-                        else:
-                                instance_name = "Lab machine"
-                        if instance.state != 'terminated':
-                                tmpinstance = str(instance.image_id)
-                                try:
-                                        comp_lab_info = computerlab.objects.get(amazonami=tmpinstance)
-                                        lab_auth_info = comp_lab_info.lab_auth_info
-                                        connect_info = comp_lab_info.lab_connection_options
-                                        coursecode = comp_lab_info.coursecode
-                                except Exception:
-                                        comp_lab_info = {'lab_auth_info':'simple', 'lab_connection_options':'test2'}
-                                        lab_auth_info = comp_lab_info['lab_auth_info']
-                                        coursecode = 'none'
-                                        connect_info = comp_lab_info['lab_connection_options']
-				try:
-                                        fetch_status = ec2.get_all_instance_status(instance_ids=instance.id)
-                                        machine_status = fetch_status[0].system_status.details['reachability']
-                                except:
-                                        machine_status = "stopped"
-                                machines[instance.id] = {'instance_name': instance_name,'coursecode': coursecode, 'instance_type': instance.instance_type, 'lab_auth_info': lab_auth_info, 'instance_id': instance.id, 'connect_info': connect_info ,'instance_state': instance.state, 'ami_id': instance.image_id,'machine_status':machine_status ,'public_dns': instance.public_dns_name,'insert':str(instance_name)}
+                          instance_type='t1.micro',
+                          key_name='instance_key',
+                          key_extension='.pem',
+                          key_dir='~/.ssh',
+                          # key_dir='/home/infoadmin/keys',
+                          group_name='vcl_lab',
+                          ssh_port=22,
+                          cidr='0.0.0.0/0',
+                          tag='LBSC_670',
+                          user_data=None,
+                          cmd_shell=True,
+                          login_user='ubuntu',
+                          ssh_passwd=None,
+                          username='',
+                          classcode='',
+                          azone='us-east-1c'):
+    ec2 = boto.connect_ec2()
+    reservations = ec2.get_all_instances(filters={
+        'tag:student_ids': "*"+username+"*"})
+    machines = {}
+    for reservation in reservations:
+        instance = reservation.instances[0]
+        instance_tags = instance.tags
+        if instance_tags[u'Name']:
+            instance_name = instance_tags[u'Name']
+        else:
+            instance_name = "Lab machine"
+        if instance.state != 'terminated':
+            tmpinstance = str(instance.image_id)
+            try:
+                comp_lab_info = computerlab.objects.get(amazonami=tmpinstance)
+                lab_auth_info = comp_lab_info.lab_auth_info
+                connect_info = comp_lab_info.lab_connection_options
+                coursecode = comp_lab_info.coursecode
+            except Exception:
+                comp_lab_info = {
+                        'lab_auth_info': 'simple',
+                        'lab_connection_options': 'test2'
+                        }
+                lab_auth_info = comp_lab_info['lab_auth_info']
+                coursecode = 'none'
+                connect_info = comp_lab_info['lab_connection_options']
+            try:
+                fetch_status = ec2.get_all_instance_status(
+                        instance_ids=instance.id
+                        )
+                machine_status = \
+                    fetch_status[0].system_status.details['reachability']
+            except:
+                machine_status = "stopped"
+            machines[instance.id] = {
+                'instance_name': instance_name,
+                'coursecode': coursecode,
+                'instance_type': instance.instance_type,
+                'lab_auth_info': lab_auth_info,
+                'instance_id': instance.id,
+                'connect_info': connect_info,
+                'instance_state': instance.state,
+                'ami_id': instance.image_id,
+                'machine_status': machine_status,
+                'public_dns': instance.public_dns_name,
+                'insert': str(instance_name)}
 
-                return machines
+    return machines
+
 
 @login_required(login_url='/accounts/login/')
 def sandbox_page(request):
@@ -791,10 +972,26 @@ def sandbox_page(request):
                 labname = request.POST['labname']
                 monitor = request.POST['monitor']
                 try:
-                    result = create_sandbox_instance(username=myuser.username, ami=iid, instance_type=iitype, labname=labname, is_instructor=is_instructor, credentials=credentials,monitor=monitor)
+                    result = create_sandbox_instance(
+                            username=myuser.username,
+                            ami=iid,
+                            instance_type=iitype,
+                            labname=labname,
+                            is_instructor=is_instructor,
+                            credentials=credentials,
+                            monitor=monitor
+                            )
                 except:
                     iitype = 't2.micro'
-                    result = create_sandbox_instance(username=myuser.username, ami=iid, instance_type=iitype, labname=labname, is_instructor=is_instructor, credentials=credentials,monitor=monitor)
+                    result = create_sandbox_instance(
+                            username=myuser.username,
+                            ami=iid,
+                            instance_type=iitype,
+                            labname=labname,
+                            is_instructor=is_instructor,
+                            credentials=credentials,
+                            monitor=monitor
+                            )
             if action == 'Terminate Server':
                 instructor.objects.filter(instance_id=iid).delete()
                 result = terminate_instance(iid)
@@ -802,42 +999,51 @@ def sandbox_page(request):
                 public_dns = request.POST['public_dns']
                 result = create_rdp_file(public_dns)
 
-    error_msg=''
+    error_msg = ''
     if result == "IntegrityError":
-       error_msg = 'Only one server is allowed per course'
+        error_msg = 'Only one server is allowed per course'
 
     list_of_machines = list_sandbox_instances(username=myuser.username)
     list_of_labs = sandbox.objects.all()
 
-    #my_lab_info = computerlab.objects.get(amazonami=list_of_machines['ami_id'])
-    return render_to_response('lab/sandbox.html', {'list_of_machines':list_of_machines,"is_instructor":is_instructor, 'error_msg':error_msg,'myuser':myuser, 'action': action, 'list_of_labs':list_of_labs}, context_instance=RequestContext(request))
-     #output =  'Your instance is ready to use!  RDP or SSH to: ',instance.dns_name
-    #return HttpResponseRedirect(reverse('lab.index', args=(output,)))
+    # my_lab_info =
+    #     computerlab.objects.get(amazonami=list_of_machines['ami_id'])
+    return render_to_response('lab/sandbox.html',
+                              {'list_of_machines': list_of_machines,
+                               "is_instructor": is_instructor,
+                               'error_msg': error_msg,
+                               'myuser': myuser,
+                               'action': action,
+                               'list_of_labs': list_of_labs},
+                              context_instance=RequestContext(request))
+    # output =
+    # 'Your instance is ready to use!  RDP or SSH to: ',instance.dns_name
+    # return HttpResponseRedirect(reverse('lab.index', args=(output,)))
 
 
 def create_sandbox_instance(ami='ami-ddb239b4',
-                    instance_type='t1.micro',
-#                    key_name='aws_vcl_key',
-                    key_name='instance_key',
-                    key_extension='.pem',
-                    key_dir='~/.ssh',
-#                   key_dir='/home/infoadmin/keys',
-                    group_name='default',
-                    ssh_port=22,
-                    cidr='0.0.0.0/0',
-                    tag='LBSC_670',
-                    user_data=None,
-                    cmd_shell=True,
-                    login_user='ubuntu',
-                    ssh_passwd=None,
-                    username = '',
-                    classcode='iSchool',
-                    instructor_id='',
-                    credentials='',
-                    monitor='yes',
-                    is_instructor="no",
-                    labname='',
-                    azone = 'us-east-1c'):
+                            instance_type='t1.micro',
+                            # key_name='aws_vcl_key',
+                            key_name='instance_key',
+                            key_extension='.pem',
+                            key_dir='~/.ssh',
+                            # key_dir='/home/infoadmin/keys',
+                            group_name='default',
+                            ssh_port=22,
+                            cidr='0.0.0.0/0',
+                            tag='LBSC_670',
+                            user_data=None,
+                            cmd_shell=True,
+                            login_user='ubuntu',
+                            ssh_passwd=None,
+                            username='',
+                            classcode='iSchool',
+                            instructor_id='',
+                            credentials='',
+                            monitor='yes',
+                            is_instructor="no",
+                            labname='',
+                            azone='us-east-1c'):
 
     aws_conn = boto.ec2.connection.EC2Connection()
     # Create a connection to EC2 service.
@@ -889,14 +1095,15 @@ def create_sandbox_instance(ami='ami-ddb239b4',
         else:
             raise
 
-        #find the volume for the user and class in question
-        #volumes = ec2.get_all_volumes(filters={'tag-value': username, 'tag-value':classcode})
-        #Attach the volume to the server
-        #result = volumes.attach(instance, '/dev/sdf')
-        #define user data to mount the volume
-    # Now start up the instance.  The run_instances method
-    # has many, many parameters but these are all we need
-    # for now.
+        # find the volume for the user and class in question
+        # volumes = ec2.get_all_volumes(filters=
+        # {'tag-value': username, 'tag-value':classcode})
+        # Attach the volume to the server
+        # result = volumes.attach(instance, '/dev/sdf')
+        # define user data to mount the volume
+        # Now start up the instance.  The run_instances method
+        # has many, many parameters but these are all we need
+        # for now.
     reservation = ec2.run_instances(ami,
                                     key_name=key_name,
                                     security_groups=[group_name],
@@ -908,7 +1115,7 @@ def create_sandbox_instance(ami='ami-ddb239b4',
     # returned by EC2.
 
     instance = reservation.instances[0]
-    machinename = "sandbox: " +  labname + "--" + username
+    machinename = "sandbox: " + labname + "--" + username
     sandbox_user = "sandbox_user:"+username
     instance.add_tag('sandbox_user', sandbox_user)
     instance.add_tag('Name', machinename)
@@ -926,54 +1133,74 @@ def create_sandbox_instance(ami='ami-ddb239b4',
         create_status_alarm(instance.id)
     if is_instructor == "yes":
         if monitor == "yes":
-           create_status_alarm(instance.id)
+            create_status_alarm(instance.id)
 
+    return 'Your instance has been created and is running at',
+    instance.dns_name,
+    '  Please use NX Viewer or remote desktop to connect.'
 
-    return 'Your instance has been created and is running at', instance.dns_name, '  Please use NX Viewer or remote desktop to connect.'
 
 def list_sandbox_instances(ami='ami-',
-                   instance_type='t1.micro',
-                   key_name='instance_key',
-                   key_extension='.pem',
-                   key_dir='~/.ssh',
-#                  key_dir='/home/infoadmin/keys',
-                   group_name='vcl_lab',
-                   ssh_port=22,
-                   cidr='0.0.0.0/0',
-                   tag='LBSC_670',
-                   user_data=None,
-                   cmd_shell=True,
-                   login_user='ubuntu',
-                   ssh_passwd=None,
-                   username = '',
-                   classcode='',
-                   azone = 'us-east-1c'):
-                ec2 = boto.connect_ec2()
-                reservations = ec2.get_all_instances(filters={'tag:sandbox_user':"*"+username+"*"})
-                machines = {}
-                for reservation in reservations:
-                        instance = reservation.instances[0]
-                        instance_tags = instance.tags
-                        if instance_tags[u'Name']:
-                                instance_name = instance_tags[u'Name']
-                        else:
-                                instance_name = "Lab machine"
-                        if instance.state != 'terminated':
-                                tmpinstance = str(instance.image_id)
-                                try:
-                                        comp_lab_info = sandbox.objects.get(amazonami=tmpinstance)
-                                        lab_auth_info = comp_lab_info.lab_auth_info
-                                        labname = comp_lab_info.labname
-                                except Exception:
-                                        comp_lab_info = {'lab_auth_info':'simple', 'lab_connection_options':'test2'}
-                                        lab_auth_info = comp_lab_info['lab_auth_info']
-                                        labname = 'none'
-				try:
-                                        fetch_status = ec2.get_all_instance_status(instance_ids=instance.id)
-                                        machine_status = fetch_status[0].system_status.details['reachability']
-                                except:
-                                        machine_status = "stopped"
+                           instance_type='t1.micro',
+                           key_name='instance_key',
+                           key_extension='.pem',
+                           key_dir='~/.ssh',
+                           # key_dir='/home/infoadmin/keys',
+                           group_name='vcl_lab',
+                           ssh_port=22,
+                           cidr='0.0.0.0/0',
+                           tag='LBSC_670',
+                           user_data=None,
+                           cmd_shell=True,
+                           login_user='ubuntu',
+                           ssh_passwd=None,
+                           username='',
+                           classcode='',
+                           azone='us-east-1c'):
+    ec2 = boto.connect_ec2()
+    reservations = ec2.get_all_instances(filters={
+        'tag:sandbox_user': "*"+username+"*"}
+        )
+    machines = {}
+    for reservation in reservations:
+        instance = reservation.instances[0]
+        instance_tags = instance.tags
+        if instance_tags[u'Name']:
+            instance_name = instance_tags[u'Name']
+        else:
+            instance_name = "Lab machine"
+        if instance.state != 'terminated':
+            tmpinstance = str(instance.image_id)
+            try:
+                comp_lab_info = sandbox.objects.get(amazonami=tmpinstance)
+                lab_auth_info = comp_lab_info.lab_auth_info
+                labname = comp_lab_info.labname
+            except Exception:
+                comp_lab_info = {'lab_auth_info': 'simple',
+                                 'lab_connection_options': 'test2'
+                                 }
+                lab_auth_info = comp_lab_info['lab_auth_info']
+                labname = 'none'
+            try:
+                fetch_status = ec2.get_all_instance_status(
+                        instance_ids=instance.id
+                        )
+                machine_status = fetch_status[0].system_status.details
+                ['reachability']
+            except:
+                machine_status = "stopped"
 
-                                machines[instance.id] = {'instance_name': instance_name,'labname': labname, 'instance_type': instance.instance_type, 'lab_auth_info': lab_auth_info, 'instance_id': instance.id ,'instance_state': instance.state, 'ami_id': instance.image_id, 'machine_status': machine_status, 'public_dns': instance.public_dns_name,'insert':str(instance_name)}
+            machines[instance.id] = {
+                    'instance_name': instance_name,
+                    'labname': labname,
+                    'instance_type': instance.instance_type,
+                    'lab_auth_info': lab_auth_info,
+                    'instance_id': instance.id,
+                    'instance_state': instance.state,
+                    'ami_id': instance.image_id,
+                    'machine_status': machine_status,
+                    'public_dns': instance.public_dns_name,
+                    'insert': str(instance_name)
+                    }
 
-                return machines
+    return machines
