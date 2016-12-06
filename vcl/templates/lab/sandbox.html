@@ -81,25 +81,33 @@ function delayer(){
         {{ value }}
         </div>
 -->
-        <ul>
+        <ul class="existingMachines" id="{{ value.public_dns }}">
         {% for key2,value2 in value.items %}
-
         {% if key2 == 'public_dns' and value2 > '' %}
                 <input type="hidden" name="public_dns" value="{{ value2 }}" />
                 <li class="highlight"> 
-		{% if value.machine_status == 'initializing' %}
-                <a class="btn btn-info" href='#'> Initializing Machine</a>
-		<img src="/static/admin/img/spinner.gif" height="35" width="30"> (15-20 mins)
-		</br>
-		
 		<script type="text/javascript">
-                setTimeout('delayer()', 720000);
-                </script>
-                
-		{% else %}
-                <a class="btn btn-info" href="./downloadrdp/?public_dns={{ value2 }}&lab_auth_info={{ value.lab_auth_info }}"><i class="glyphicon glyphicon-cloud-download"></i>  Download RDP File</a>
-                </br>Machine Address:</br>{{ value2 }}
-                {% endif %}
+			var divInitializingMachine =
+			    '<div class="spinnerDiv">' +
+			        '<a class="btn btn-info" href=\'#\'>Initializing Machine</a>' +
+			        '<img src="/static/admin/img/spinner.gif" height="35" width="30"> (15-20 mins)</br>' +
+			    '</div>';
+			var divInitializingComplete =
+			    '<div class="buttonDiv">' +
+			        '<a class="btn btn-info" href="./downloadrdp/?public_dns={{ value2 }}&lab_auth_info={{ value.lab_auth_info }}">' +
+			            '<i class="glyphicon glyphicon-cloud-download"></i> Download RDP File' +
+			        '</a></br>Machine Address:</br>{{ value2 }}' +
+			    '</div>;
+			if ("{{ value.machine_status }}".includes("initializing")){
+				var id_value = document.getElementById("{{ value.public_dns }}");
+				$(id_value).append(divInitializingMachine);
+				setTimeout('delayer()', 150000);
+			} else {
+				var id_value = document.getElementById("{{ value.public_dns }}");
+				$(id_value).append(divInitializingComplete);
+			}
+		</script>
+			
         <!--    <li class="highlight">Machine Address: <a class="btn btn-primary" href="./downloadrdp/?public_dns={{ value2 }}"><i class=" icon-eye-open"></i>{{ value2 }}</a>  -->
 
         {% else %}
