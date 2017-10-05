@@ -128,7 +128,7 @@ def index(request):
 
 def create_instance(
         ami='ami-ddb239b4',
-        instance_type='t1.micro',
+        instance_type='t2.medium',
         # key_name='aws_vcl_key',
         key_name='instance_key',
         key_extension='.pem',
