@@ -1,15 +1,17 @@
 ---
+- name: Upgrade pip
+  command: 'pip install -U pip'
+  become: true
 
 - name: Install virtualenv
-  pip: name=virtualenv
-  tags: packages
-
-- name: Create the virtualenv
-  command: virtualenv {{ virtualenv_path }} --no-site-packages
-           creates={{ virtualenv_path }}/bin/activate
-
-- name: Ensure gunicorn is installed
-  pip: virtualenv={{ virtualenv_path }} name=gunicorn
+  pip:
+    name:
+      - 'zipp'
+      - 'urllib3[secure]'
+      - 'gunicorn'
+      - 'mysql-python'
+    virtualenv: "{{ virtualenv_path }}"
+    virtualenv_python: '/usr/bin/python2.7'
 
 - name: Create the Gunicorn script file
   template: src=gunicorn_start.j2
@@ -18,7 +20,6 @@
             group={{ gunicorn_group }}
             mode=0755
             backup=yes
-  tags: deploy
 
 - name: Create the application log folder
   file: path={{ application_log_dir }}
@@ -37,7 +38,6 @@
             group={{ gunicorn_group }}
             mode=0640
             backup=yes
-  tags: deploy
 
 - name: Set permission to the application log file
   file: path={{ application_log_file }}

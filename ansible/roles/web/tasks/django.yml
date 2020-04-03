@@ -1,13 +1,15 @@
 ---
 
 - name: Install packages required by the Django app inside virtualenv
-  pip: virtualenv={{ virtualenv_path }} requirements={{ requirements_file }}
+  pip:
+    virtualenv: "{{ virtualenv_path }}"
+    virtualenv_python: '/usr/bin/python2.7'
+    requirements: "{{ requirements_file }}"
 
 - name: copy settings
   template: src=settings_local.py dest={{ project_path }}/settings_local.py
 
 - name: Make Django app migrations
-  #become: no
   django_manage: command="makemigrations --noinput" app_path="{{ project_path }}" virtualenv="{{ virtualenv_path }}"
   tags: django.migrate
 
