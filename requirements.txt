@@ -9,7 +9,7 @@ django-registration-redux==1.1
 
 celery==3.1.18
 flower==0.8.1
-gunicorn==19.3.0
+gunicorn==19.5.0
 psycopg2==2.6
 Werkzeug==0.15.3
 youtube-dl>=2014.06.26
